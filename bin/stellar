@@ -77,11 +77,11 @@ files.each do |file|
   info = { filters: [Jekyll::Filters], registers: { site: site } }
   content = Liquid::Template.parse(content).render({}, info)
 
-  feeds.push({ 'content' => content, 'data' => data , 'date' => file['date'].iso8601 }) if pos < 10
-
   markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML,
     :autolink => true, :space_after_headers => true)
   content = markdown.render(content)
+
+  feeds.push({ 'content' => content, 'data' => data , 'date' => file['date'].iso8601 }) if pos < 10
   
   next_page = files[pos + 1] if pos < files.length - 1
   prev_page = files[pos - 1] if pos > 0
