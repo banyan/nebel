@@ -1,0 +1,126 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+$LOAD_PATH.unshift '.'
+
+require 'bundler/setup'
+require 'time'
+require 'English'
+require 'yaml'
+require 'fileutils'
+require 'liquid'
+require 'redcarpet'
+
+def parse(file)
+  if File.read(file['path']) =~ /^(---\s*\n.*?\n?)^(---\s*$\n?)/m
+    content = $POSTMATCH
+    data    = YAML.load($1)
+  end
+  return content, data
+end
+
+Dir[File.join('plugins', '*.rb')].each do |f|
+  require f
+end
+
+posts_dir = File.join(Dir.pwd, 'posts')
+
+files = []
+Dir.glob("#{posts_dir}/*").each do |path|
+  open(path) {|fh|
+    fh.each do |line|
+      if line =~ /date: (.+)$/
+        date = Time.parse($1)
+        files << { 'path' => path, 'date' => date }
+        break
+      end
+    end
+  }
+end
+
+files = files.sort{|a, b| a['date'] <=> b['date']}
+
+pre_entry_date = '0000/00/00'
+cnt  = 1
+files.each do |file|
+  date = file['date'].strftime('%Y/%m/%d')
+  if pre_entry_date == date
+    cnt = cnt +1
+  else
+    cnt = 1
+  end
+  file['cnt']  = cnt
+  file['link'] = sprintf "/blog/%s/%s", date, cnt.to_s
+  pre_entry_date = date
+end
+
+pos   = 0
+feeds = []
+files.reverse!
+files.each do |file|
+  content, data = parse(file)
+
+  out_dir = File.join('public', file['link'])
+  
+  FileUtils.mkpath(out_dir) unless File.directory?(out_dir)
+
+  # For compatibility with Jekyll plugins
+  site = Class.new do
+    def config
+      { 'code_dir' => '' }
+    end
+    def source
+      'codes'
+    end
+  end.new
+
+  info = { filters: [Jekyll::Filters], registers: { site: site } }
+  content = Liquid::Template.parse(content).render({}, info)
+
+  feeds.push({ 'content' => content, 'data' => data , 'date' => file['date'].iso8601 }) if pos < 10
+
+  markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML,
+    :autolink => true, :space_after_headers => true)
+  content = markdown.render(content)
+  
+  next_page = files[pos + 1] if pos < files.length - 1
+  prev_page = files[pos - 1] if pos > 0
+
+  include Octopress::Date
+  params = {
+    'title'          => data['title'],
+    'link'           => file['link'],
+    'date'           => file['date'],
+    'date_formatted' => Octopress::Date.ordinalize(file['date']),
+    'content'        => content,
+    'next_page'      => next_page,
+    'prev_page'      => prev_page,
+  }
+
+  layout = File.read('layouts/post.html')
+  post = Liquid::Template.parse(layout).render(params, info)
+
+  f = File.open(File.join(out_dir, 'index.html'), "w")
+  f.write post
+  f.close
+
+  if pos == 0
+    params['index'] = true
+    layout = File.read('layouts/post.html')
+    post = Liquid::Template.parse(layout).render(params, info)
+    f = File.open(File.join('public', 'index.html'), "w")
+    f.write post
+    f.close
+  end
+
+  pos = pos + 1
+end
+
+FileUtils.cp_r(Dir.glob('static/*'), 'public')
+
+layout = File.read('layouts/atom.xml')
+atom   = Liquid::Template.parse(layout).render 'feeds' => feeds
+
+f = File.open(File.join('public', 'atom.xml'), "w")
+f.write atom
+f.close
