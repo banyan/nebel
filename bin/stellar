@@ -19,6 +19,10 @@ def parse(file)
   return content, data
 end
 
+Dir.glob('public/*').each do |path|
+  `rm -rf  #{path}`
+end
+
 Dir[File.join('plugins', '*.rb')].each do |f|
   require f
 end
