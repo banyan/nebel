@@ -85,8 +85,13 @@ files.each do |file|
     :autolink => true, :space_after_headers => true)
   content = markdown.render(content)
 
-  feeds.push({ 'content' => content, 'data' => data , 'date' => file['date'].iso8601 }) if pos < 10
-  
+  feeds.push({
+    'content' => content,
+    'data'    => data ,
+    'date'    => file['date'].iso8601,
+    'link'    => file['link'],
+  }) if pos < 10
+
   next_page = files[pos + 1] if pos < files.length - 1
   prev_page = files[pos - 1] if pos > 0
 
