@@ -86,8 +86,8 @@ files.each do |file|
   content = markdown.render(content)
 
   feeds.push({
+    'title'   => data['title'],
     'content' => content,
-    'data'    => data ,
     'date'    => file['date'].iso8601,
     'link'    => file['link'],
   }) if pos < 10
