@@ -1,2 +1,2 @@
-# Stellar - A static site generator
+# Nebel - A static site generator
 

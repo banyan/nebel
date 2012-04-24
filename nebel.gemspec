@@ -1,11 +1,11 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name        = "stellar"
+  s.name        = "nebel"
   s.version     = "0.0.1"
   s.authors     = ["Gosuke Miyashita"]
   s.email       = ["gosukenator@gmail.com"]
-  s.homepage    = "https://github.com/mizzy/stellar"
+  s.homepage    = "https://github.com/mizzy/nebel"
   s.summary     = %q{A command line tool for generating satic site.}
 
   s.files         = `git ls-files`.split("\n")
