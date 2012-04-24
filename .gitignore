@@ -2,3 +2,5 @@
 .gist-cache
 .twan-cache
 .vimeo-cache
+Gemfile.lock
+*.gem
