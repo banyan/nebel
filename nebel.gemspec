@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Gosuke Miyashita"]
   s.email       = ["gosukenator@gmail.com"]
   s.homepage    = "https://github.com/mizzy/nebel"
-  s.summary     = %q{A command line tool for generating satic site.}
+  s.summary     = %q{A command line tool for generating a static site.}
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
