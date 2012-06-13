@@ -10,6 +10,32 @@ require 'yaml'
 require 'fileutils'
 require 'liquid'
 require 'redcarpet'
+require 'slop'
+
+slop = Slop.parse :help => true do
+  banner "Usage: nebel [options]"
+  on :s, :server,    "Start web server",                                       :optional => true
+  on :p, :port=,     "Port number\t\t\t\t(default port 5000)",                 :optional => true, :default => 5000,   :as => Integer
+  on :b, :base_url=, "Serve website from a given base URL\t(default '/blog')", :optional => true, :default => "/blog"
+end
+
+exit if slop.help?
+
+options = slop.to_hash
+options.delete(:server) unless slop.server?
+
+if slop.server?
+  require 'webrick'
+  include WEBrick
+
+  s = HTTPServer.new(
+    Port: slop[:port],
+    DocumentRoot: './public'
+  )
+
+  trap('INT') { s.shutdown }
+  s.start
+end
 
 def parse(file)
   if File.read(file['path']) =~ /^(---\s*\n.*?\n?)^(---\s*$\n?)/m
@@ -54,7 +80,7 @@ files.each do |file|
     cnt = 1
   end
   file['cnt']  = cnt
-  file['link'] = sprintf "/blog/%s/%s", date, cnt.to_s
+  file['link'] = sprintf "#{slop[:base_url]}/%s/%s", date, cnt.to_s
   pre_entry_date = date
 end
 
@@ -65,7 +91,7 @@ files.each do |file|
   content, data = parse(file)
 
   out_dir = File.join('public', file['link'])
-  
+
   FileUtils.mkpath(out_dir) unless File.directory?(out_dir)
 
   # For compatibility with Jekyll plugins
