@@ -17,6 +17,7 @@ slop = Slop.parse :help => true do
   on :s, :server,    "Start web server",                                       :optional => true
   on :p, :port=,     "Port number\t\t\t\t(default port 5000)",                 :optional => true, :default => 5000,   :as => Integer
   on :b, :base_url=, "Serve website from a given base URL\t(default '/blog')", :optional => true, :default => "/blog"
+  on     "no_clean_dir", "Doesn't remove files in public dir",                 :optional => true
 end
 
 exit if slop.help?
@@ -45,8 +46,10 @@ def parse(file)
   return content, data
 end
 
-Dir.glob('public/*').each do |path|
-  `rm -rf  #{path}`
+unless slop[:no_clean_dir]
+  Dir.glob('public/*').each do |path|
+    `rm -rf  #{path}`
+  end
 end
 
 Dir[File.join('plugins', '*.rb')].each do |f|
