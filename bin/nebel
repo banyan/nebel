@@ -10,14 +10,18 @@ require 'yaml'
 require 'fileutils'
 require 'liquid'
 require 'redcarpet'
-require 'slop'
+require 'optparse'
 
-slop = Slop.parse :help => true do
-  banner "Usage: nebel [options]"
-  on :b, :base_url=, "Serve website from a given base URL\t(default '/blog')", :optional => true, :default => "/blog"
-end
+options = {
+  :base_url     => "/blog",
+  :no_clean_dir => false
+}
 
-exit if slop.help?
+OptionParser.new { |opts|
+  opts.on('-b', '--base-url [PATH]', String, "Serve website from a given base URL\t(default '/blog')") { |val| options[:base_url] = val }
+  opts.on('--no-clean-dir', "Doesn't remove files in public dir")                                      { |val| options[:no_clean_dir] = true }
+  opts.on('-h', '--help',"Show this message") { puts opts; exit 0 }
+}.parse!
 
 def parse(file)
   if File.read(file['path']) =~ /^(---\s*\n.*?\n?)^(---\s*$\n?)/m
@@ -27,8 +31,10 @@ def parse(file)
   return content, data
 end
 
-Dir.glob('public/*').each do |path|
-  `rm -rf  #{path}`
+unless options[:no_clean_dir]
+  Dir.glob('public/*').each do |path|
+    `rm -rf  #{path}`
+  end
 end
 
 Dir[File.join('plugins', '*.rb')].each do |f|
@@ -62,7 +68,7 @@ files.each do |file|
     cnt = 1
   end
   file['cnt']  = cnt
-  file['link'] = sprintf "#{slop[:base_url]}/%s/%s", date, cnt.to_s
+  file['link'] = sprintf "#{options[:base_url]}/%s/%s", date, cnt.to_s
   pre_entry_date = date
 end
 

@@ -15,5 +15,4 @@ Gem::Specification.new do |s|
   # dependencies
   s.add_dependency 'liquid', '2.2.2'
   s.add_dependency 'redcarpet'
-  s.add_dependency 'slop', '>= 3.3.1'
 end
