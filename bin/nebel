@@ -14,12 +14,14 @@ require 'optparse'
 
 options = {
   :base_url     => "/blog",
-  :no_clean_dir => false
+  :archive      => false,
+  :no_clean_dir => false,
 }
 
 OptionParser.new { |opts|
   opts.on('-b', '--base-url [PATH]', String, "Serve website from a given base URL\t(default '/blog')") { |val| options[:base_url] = val }
-  opts.on('--no-clean-dir', "Doesn't remove files in public dir")                                      { |val| options[:no_clean_dir] = true }
+  opts.on('-a', '--archive', "Generate archive pages\t\t\t(default '/archive')")                       { options[:archive]      = true }
+  opts.on('--no-clean-dir', "Doesn't remove files in public dir")                                      { options[:no_clean_dir] = true }
   opts.on('-h', '--help',"Show this message") { puts opts; exit 0 }
 }.parse!
 
@@ -74,6 +76,7 @@ end
 
 pos   = 0
 feeds = []
+archives = []
 files.reverse!
 files.each do |file|
   content, data = parse(file)
@@ -120,6 +123,14 @@ files.each do |file|
     'prev_page'      => prev_page,
   }
 
+  if options[:archive]
+    archives.push({
+      'title'          => data['title'],
+      'date_formatted' => Octopress::Date.ordinalize(file['date']),
+      'link'           => file['link'],
+    })
+  end
+
   layout = File.read('layouts/post.html')
   post = Liquid::Template.parse(layout).render(params, info)
 
@@ -147,3 +158,15 @@ atom   = Liquid::Template.parse(layout).render 'feeds' => feeds
 f = File.open(File.join('public', 'atom.xml'), "w")
 f.write atom
 f.close
+
+if options[:archive]
+  layout  = File.read('layouts/archive.html')
+  archive = Liquid::Template.parse(layout).render 'archives' => archives
+
+  archive_dir = "public/archive"
+  FileUtils.mkdir(archive_dir) unless File.directory?(archive_dir)
+
+  f = File.open(File.join('public', 'archive', 'index.html'), "w")
+  f.write archive
+  f.close
+end
